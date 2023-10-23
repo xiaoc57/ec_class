@@ -12,9 +12,9 @@ gui_args:
   colab: False
 
 ea_args:
-  n_population: 20
+  n_population: 16
   n_new: 2
   p_mutation: 0.5
-  batch_size: 4
+  batch_size: 16
   use_gui: True
   seed: null

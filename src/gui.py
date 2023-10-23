@@ -103,7 +103,8 @@ class GUI(object):
             img_wrapper.window_create('end', window=button)
 
         for idx, image in enumerate(images):
-            resized = image.resize(self.img_size, Image.ANTIALIAS)
+            resized = image.resize(self.img_size, Image.LANCZOS)
+            # resized = image.resize(self.img_size, Image.ANTIALIAS)
             tkimage = ImageTk.PhotoImage(resized)
             command = partial(img_command, idx=idx)
             render_image(tkimage, command)

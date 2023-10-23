@@ -1,4 +1,4 @@
-from src.gan import get_model
+from src.gan import get_model, getmodel2
 from src.gui import GUI, PLT_GUI
 from src.utils import set_seed, torch_to_pil, torch_to_np
 import torch
@@ -41,11 +41,16 @@ class Evolutionary_algorithm(object):
             use_gui (bool): Whether to use tkinter GUI.
             seed (int or None): If None, no seeds will be set.
         """
+        # self.model = getmodel2()
+        # self.device = self.model.device
+        # self.device = "cuda"
         self.model = get_model(**gan_args)
         self.device = self.model.device
+
         self.use_gui = use_gui
         self.gui = GUI(**gui_args) if use_gui else PLT_GUI(**gui_args)
         self.n_population = n_population
+        # self.d_population = 100
         self.d_population = self.model.config.latentVectorDim
         self.n_new = n_new
         self.p_mutation = p_mutation
@@ -103,6 +108,39 @@ class Evolutionary_algorithm(object):
             exit_flag (bool): True if the Exit button was pressed.
             img_status (list(bool)): i-th element is True if the i-th image was selected.
         """
+
+        images_tr = []
+        wraper = (lambda x: x) if population.is_cuda else tqdm.tqdm
+        # Feed the latents into the gan to obtain images
+        for step in wraper(range(0, population.shape[0], self.batch_size)):
+            with torch.no_grad():
+                images_batch = self.model.test(
+                    population[step: step + self.batch_size])
+            images_tr.append(images_batch)
+
+        images_tr = torch.cat(images_tr).to(self.device)
+        # Transform torch.tensor into PIL or numpy
+        if self.use_gui:
+            images = torch_to_pil(images_tr)
+        else:
+            images = torch_to_np(images_tr)
+        # Receive mask and flags from gui
+        reset_flag, exit_flag, mask = self.gui.render(images)
+
+        return reset_flag, exit_flag, mask
+
+    def fitness_function2(self, population):
+        """Obtains selection fitness from the gui.
+
+        Args:
+            population (torch.tensor)[n_population, d_population]:
+
+        Returns:
+            reset_flag (bool): True if the Reset button was pressed.
+            exit_flag (bool): True if the Exit button was pressed.
+            img_status (list(bool)): i-th element is True if the i-th image was selected.
+        """
+        population = population[..., None, None]
         images_tr = []
         wraper = (lambda x: x) if population.is_cuda else tqdm.tqdm
         # Feed the latents into the gan to obtain images
